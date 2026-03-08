@@ -1,3 +1,4 @@
+
 import numpy as np
 
 # =============================
@@ -33,8 +34,11 @@ def forward_kinematics(q):
 # =============================
 
 def compute_jacobian(q):
+
     J = np.zeros((6,6))
+
     T = np.eye(4)
+
     z = []
     o = []
 
@@ -69,20 +73,29 @@ def compute_jacobian(q):
 # INVERSE KINEMATICS (Numerical)
 # =============================
 
-def inverse_kinematics(target_pos, q_init, iterations=1000, alpha=0.5):
+def inverse_kinematics(target_pos, q_init):
+
     q = np.array(q_init, dtype=float)
 
-    for _ in range(iterations):
+    alpha = 0.5
+
+    for i in range(1000):
+
         T = forward_kinematics(q)
+
         pos = T[:3,3]
+
         error = target_pos - pos
 
         if np.linalg.norm(error) < 1e-4:
-            return q
+            break
 
         J = compute_jacobian(q)
-        Jp = np.linalg.pinv(J[:3,:])
-        dq = alpha * Jp @ error
+
+        J_pinv = np.linalg.pinv(J[:3,:])
+
+        dq = alpha * J_pinv @ error
+
         q += dq
 
     return q
@@ -93,18 +106,16 @@ def inverse_kinematics(target_pos, q_init, iterations=1000, alpha=0.5):
 
 if __name__ == "__main__":
 
-    print("\n=== FORWARD KINEMATICS TEST ===")
-    q_test = [0.0, -1.0, 1.0, 0.0, 0.5, 0.0]
-    T = forward_kinematics(q_test)
+    target = np.array([-0.561, -0.409, 0.245])
 
-    print("T06 =\n", T)
-    print("Position =", T[:3,3])
+    print("Target position:", target)
 
-    print("\n=== INVERSE KINEMATICS TEST ===")
-    target = T[:3,3]
     q_guess = [0,0,0,0,0,0]
-    q_sol = inverse_kinematics(target, q_guess)
 
-    print("Recovered q =", q_sol)
+    q_solution = inverse_kinematics(target, q_guess)
 
+    print("IK Solution:", q_solution)
 
+    T_check = forward_kinematics(q_solution)
+
+    print("IK FK Position:", T_check[:3,3])
